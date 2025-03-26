@@ -1,20 +1,35 @@
-# Usa una imagen base oficial de Node.js
-FROM node:18
+### Stage 1: Build the Angular app
+FROM node:18-alpine AS build
 
-# Establece el directorio de trabajo dentro del contenedor
+# Set working directory
 WORKDIR /app
 
-# Copia el archivo package.json y package-lock.json
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Instala las dependencias
-RUN npm install
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
-# Copia el resto del código de la aplicación
+# Copy the rest of the project files
 COPY . .
 
-# Expone el puerto en el que corre la aplicación (ajusta según sea necesario)
-EXPOSE 3000
+# Build the Angular app in production mode
+RUN npm run build -- --configuration=production
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"]
+### Stage 2: Serve the app with Nginx
+FROM nginx:stable-alpine
+
+# Remove default Nginx static files
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built Angular files from the previous stage
+COPY --from=build /app/dist/my-angular-app /usr/share/nginx/html
+
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx server
+CMD ["nginx", "-g", "daemon off;"]
