@@ -23,7 +23,7 @@ FROM nginx:stable-alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy built Angular files from the previous stage
-COPY --from=build /app/dist/my-angular-app /usr/share/nginx/html
+COPY --from=build /app/dist/edu-final-app /usr/share/nginx/html
 
 # Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
